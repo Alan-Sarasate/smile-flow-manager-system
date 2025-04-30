@@ -1,33 +1,86 @@
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Bell, User, Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import React from "react";
+import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Bell, LogOut, Menu, Settings, User } from "lucide-react";
+import { useAuthStore } from "@/stores/authStore";
 
-const Navbar = () => {
+interface NavbarProps extends React.HTMLAttributes<HTMLElement> {
+  onToggleSidebar: () => void;
+}
+
+export function Navbar({ className, onToggleSidebar, ...props }: NavbarProps) {
+  const { logout, user, profile } = useAuthStore();
+  
   return (
-    <nav className="h-16 border-b flex items-center justify-between px-4 bg-white">
-      <div className="flex items-center gap-4">
-        <h1 className="text-xl font-bold text-dental-blue">DentalClinic</h1>
-        <div className="hidden md:flex relative">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Buscar..." 
-            className="pl-9 w-[200px] lg:w-[300px] bg-muted/30" 
-          />
-        </div>
+    <div
+      className={cn(
+        "fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between border-b bg-background px-4 md:px-6",
+        className
+      )}
+      {...props}
+    >
+      <div className="flex items-center">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="mr-2 md:hidden"
+          onClick={onToggleSidebar}
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+        <Link to="/dashboard" className="flex items-center">
+          <span className="text-xl font-bold text-primary">Dental Clinic</span>
+        </Link>
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
-        </Button>
         <Button variant="ghost" size="icon">
-          <User className="h-5 w-5" />
+          <Bell className="h-5 w-5" />
         </Button>
-      </div>
-    </nav>
-  );
-};
 
-export default Navbar;
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full overflow-hidden"
+            >
+              <User className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>
+              <div>
+                <p className="font-medium">{profile?.name || 'Usuário'}</p>
+                <p className="text-xs text-muted-foreground">{user?.email}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <User className="mr-2 h-4 w-4" />
+              <span>Perfil</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Configurações</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => logout()}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Sair</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
+  );
+}
