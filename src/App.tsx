@@ -12,6 +12,8 @@ import Appointments from "./pages/Appointments";
 import Finance from "./pages/Finance";
 import Inventory from "./pages/Inventory";
 import ClientBooking from "./pages/ClientBooking";
+import Clients from "./pages/Clients";
+import ClientDetail from "./pages/ClientDetail";
 import DashboardLayout from "./components/dashboard/DashboardLayout";
 import Auth from "./pages/Auth";
 import { useAuthStore } from "./stores/authStore";
@@ -57,6 +59,8 @@ const App = () => {
               <Route path="/appointments" element={<Appointments />} />
               <Route path="/finance" element={<Finance />} />
               <Route path="/inventory" element={<Inventory />} />
+              <Route path="/clients" element={<Clients />} />
+              <Route path="/clients/:id" element={<ClientDetail />} />
             </Route>
             
             <Route path="*" element={<NotFound />} />

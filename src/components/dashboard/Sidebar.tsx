@@ -2,96 +2,102 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useAuthStore } from '@/stores/authStore';
 import { 
+  Home, 
   Calendar, 
-  LayoutDashboard, 
   DollarSign, 
-  ShoppingCart, 
-  Clock, 
-  Settings, 
-  LogOut 
+  Package, 
+  Settings,
+  Users,
+  FileText,
+  BarChart
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 
-type NavItem = {
-  label: string;
-  href: string;
-  icon: React.ElementType;
-};
-
-const navItems: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Agendamentos', href: '/appointments', icon: Calendar },
-  { label: 'Financeiro', href: '/finance', icon: DollarSign },
-  { label: 'Estoque', href: '/inventory', icon: ShoppingCart },
-  { label: 'Área do Cliente', href: '/booking', icon: Clock }
+const items = [
+  {
+    title: 'Dashboard',
+    href: '/dashboard',
+    icon: Home,
+  },
+  {
+    title: 'Agendamentos',
+    href: '/appointments',
+    icon: Calendar,
+  },
+  {
+    title: 'Financeiro',
+    href: '/finance',
+    icon: DollarSign,
+  },
+  {
+    title: 'Clientes',
+    href: '/clients',
+    icon: Users,
+  },
+  {
+    title: 'Estoque',
+    href: '/inventory',
+    icon: Package,
+  },
+  {
+    title: 'Relatórios',
+    href: '/reports',
+    icon: BarChart,
+  }
 ];
 
 const Sidebar = () => {
   const location = useLocation();
-  const [collapsed, setCollapsed] = React.useState(false);
-
+  const { isAdmin } = useAuthStore();
+  
   return (
-    <div 
-      className={cn(
-        "bg-sidebar h-[calc(100vh-64px)] p-4 flex flex-col transition-all duration-200",
-        collapsed ? "w-[70px]" : "w-64"
-      )}
-    >
-      <div className="flex items-center justify-end mb-6">
-        <Button
-          variant="ghost" 
-          size="sm" 
-          onClick={() => setCollapsed(!collapsed)}
-          className="text-muted-foreground"
-        >
-          {collapsed ? "›" : "‹"}
-        </Button>
-      </div>
-      
-      <nav className="space-y-2 flex-1">
-        {navItems.map((item) => (
-          <Link 
-            key={item.href} 
-            to={item.href} 
-            className={cn(
-              "flex items-center py-2 px-3 rounded-md transition-colors",
-              location.pathname === item.href 
-                ? "bg-primary text-primary-foreground" 
-                : "hover:bg-sidebar-accent text-muted-foreground hover:text-sidebar-accent-foreground",
-              collapsed && "justify-center px-0"
-            )}
-          >
-            <item.icon className={cn("h-5 w-5", !collapsed && "mr-2")} />
-            {!collapsed && <span>{item.label}</span>}
-          </Link>
-        ))}
-      </nav>
-
-      <Separator className="my-4" />
-      
-      <div className="space-y-2">
-        <Button
-          variant="ghost" 
-          className={cn(
-            "flex items-center py-2 px-3 w-full justify-start text-muted-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent",
-            collapsed && "justify-center px-0"
-          )}
-        >
-          <Settings className={cn("h-5 w-5", !collapsed && "mr-2")} />
-          {!collapsed && <span>Configurações</span>}
-        </Button>
-        <Button 
-          variant="ghost" 
-          className={cn(
-            "flex items-center py-2 px-3 w-full justify-start text-muted-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent",
-            collapsed && "justify-center px-0"
-          )}
-        >
-          <LogOut className={cn("h-5 w-5", !collapsed && "mr-2")} />
-          {!collapsed && <span>Sair</span>}
-        </Button>
+    <div className="pb-12 w-64 bg-background border-r min-h-screen">
+      <div className="space-y-4 py-4">
+        <div className="px-4 py-2">
+          <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">
+            Menu Principal
+          </h2>
+          <div className="space-y-1">
+            {items.map((item) => (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all hover:text-primary",
+                  location.pathname === item.href
+                    ? "bg-muted text-primary"
+                    : "text-muted-foreground"
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.title}
+              </Link>
+            ))}
+          </div>
+        </div>
+        
+        {isAdmin && (
+          <div className="px-4 py-2">
+            <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">
+              Administração
+            </h2>
+            <div className="space-y-1">
+              <Link
+                to="/settings"
+                className={cn(
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all hover:text-primary",
+                  location.pathname === '/settings'
+                    ? "bg-muted text-primary"
+                    : "text-muted-foreground"
+                )}
+              >
+                <Settings className="h-4 w-4" />
+                Configurações
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

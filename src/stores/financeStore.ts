@@ -50,7 +50,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     try {
       // For now, we'll simulate data from our existing mock transactions
       // Later, this will be replaced with real Supabase calls
-      const mockTransactions = [
+      const mockTransactions: Transaction[] = [
         {
           id: '1',
           date: '27/04/2025',
