@@ -84,4 +84,3 @@ export function Navbar({ className, onToggleSidebar, ...props }: NavbarProps) {
     </div>
   );
 }
-

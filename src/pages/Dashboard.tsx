@@ -1,11 +1,66 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, DollarSign, ShoppingCart, User, Clock } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { getUpcomingAppointments } from '@/services/appointmentService';
+import { getMockCriticalInventory } from '@/services/inventoryService';
+import { Appointment, InventoryItem } from '@/types/supabase';
+import { format, isToday, isTomorrow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { useQuery } from '@tanstack/react-query';
+import { useToast } from '@/components/ui/use-toast';
 
 const Dashboard = () => {
+  const { toast } = useToast();
+  
+  // Fetch upcoming appointments with React Query
+  const { 
+    data: appointments = [], 
+    isLoading: appointmentsLoading,
+    error: appointmentsError
+  } = useQuery({
+    queryKey: ['upcomingAppointments'],
+    queryFn: getUpcomingAppointments,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    onError: () => {
+      toast({
+        title: "Erro ao carregar agendamentos",
+        description: "Não foi possível carregar os próximos agendamentos",
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Use mock inventory data for now
+  // In a future update, we'll replace this with real data from Supabase
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  
+  useEffect(() => {
+    setInventoryItems(getMockCriticalInventory());
+  }, []);
+  
+  // Format the date display for appointments
+  const formatAppointmentDate = (dateString: string) => {
+    const date = new Date(dateString);
+    
+    if (isToday(date)) {
+      return 'Hoje';
+    } else if (isTomorrow(date)) {
+      return 'Amanhã';
+    } else {
+      return format(date, 'dd/MM/yyyy', { locale: ptBR });
+    }
+  };
+  
+  // Format the time display for appointments
+  const formatAppointmentTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return format(date, 'HH:mm');
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -20,7 +75,11 @@ const Dashboard = () => {
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
+            <div className="text-2xl font-bold">
+              {appointmentsLoading ? 
+                "..." : 
+                appointments.filter(apt => isToday(new Date(apt.date))).length}
+            </div>
             <p className="text-xs text-muted-foreground">+2 comparado a ontem</p>
           </CardContent>
         </Card>
@@ -53,7 +112,7 @@ const Dashboard = () => {
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
+            <div className="text-2xl font-bold">{inventoryItems.length}</div>
             <p className="text-xs text-muted-foreground text-red-500">Alerta de reabastecimento</p>
           </CardContent>
         </Card>
@@ -65,55 +124,38 @@ const Dashboard = () => {
             <CardTitle>Próximos Agendamentos</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-3">
-                <div className="bg-primary/10 p-2 rounded-full">
-                  <Clock className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium">João Silva</p>
-                  <p className="text-sm text-muted-foreground">Limpeza</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-medium">10:30</p>
-                <p className="text-xs text-muted-foreground">Hoje</p>
-              </div>
-            </div>
-            <Separator />
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-3">
-                <div className="bg-primary/10 p-2 rounded-full">
-                  <Clock className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium">Maria Oliveira</p>
-                  <p className="text-sm text-muted-foreground">Clareamento</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-medium">13:45</p>
-                <p className="text-xs text-muted-foreground">Hoje</p>
-              </div>
-            </div>
-            <Separator />
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-3">
-                <div className="bg-primary/10 p-2 rounded-full">
-                  <Clock className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium">Carlos Santos</p>
-                  <p className="text-sm text-muted-foreground">Avaliação</p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-medium">09:15</p>
-                <p className="text-xs text-muted-foreground">Amanhã</p>
-              </div>
-            </div>
+            {appointmentsLoading ? (
+              <p className="text-center text-muted-foreground py-4">Carregando agendamentos...</p>
+            ) : appointmentsError ? (
+              <p className="text-center text-red-500 py-4">Erro ao carregar agendamentos</p>
+            ) : appointments.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">Nenhum agendamento próximo</p>
+            ) : (
+              appointments.slice(0, 3).map((appointment) => (
+                <React.Fragment key={appointment.id}>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center space-x-3">
+                      <div className="bg-primary/10 p-2 rounded-full">
+                        <Clock className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{appointment.client_name}</p>
+                        <p className="text-sm text-muted-foreground">{appointment.procedure_name}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium">{formatAppointmentTime(appointment.date)}</p>
+                      <p className="text-xs text-muted-foreground">{formatAppointmentDate(appointment.date)}</p>
+                    </div>
+                  </div>
+                  {appointments.indexOf(appointment) < Math.min(2, appointments.length - 1) && <Separator />}
+                </React.Fragment>
+              ))
+            )}
             <div className="pt-2">
-              <Button variant="outline" className="w-full">Ver Todos</Button>
+              <Button variant="outline" className="w-full" asChild>
+                <Link to="/appointments">Ver Todos</Link>
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -123,46 +165,35 @@ const Dashboard = () => {
             <CardTitle>Estoque Crítico</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-3">
-                <div className="bg-destructive/10 p-2 rounded-full">
-                  <ShoppingCart className="h-5 w-5 text-destructive" />
-                </div>
-                <div>
-                  <p className="font-medium">Resina Z350</p>
-                  <p className="text-sm text-muted-foreground">Estoque: 2 unidades</p>
-                </div>
-              </div>
-              <Button size="sm" variant="outline">Repor</Button>
-            </div>
-            <Separator />
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-3">
-                <div className="bg-destructive/10 p-2 rounded-full">
-                  <ShoppingCart className="h-5 w-5 text-destructive" />
-                </div>
-                <div>
-                  <p className="font-medium">Anestésico</p>
-                  <p className="text-sm text-muted-foreground">Estoque: 5 unidades</p>
-                </div>
-              </div>
-              <Button size="sm" variant="outline">Repor</Button>
-            </div>
-            <Separator />
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-3">
-                <div className="bg-yellow-500/10 p-2 rounded-full">
-                  <ShoppingCart className="h-5 w-5 text-yellow-500" />
-                </div>
-                <div>
-                  <p className="font-medium">Alginato</p>
-                  <p className="text-sm text-muted-foreground">Estoque: 8 unidades</p>
-                </div>
-              </div>
-              <Button size="sm" variant="outline">Repor</Button>
-            </div>
+            {inventoryItems.length === 0 ? (
+              <p className="text-center text-muted-foreground py-4">Nenhum item em estoque crítico</p>
+            ) : (
+              inventoryItems.map((item) => (
+                <React.Fragment key={item.id}>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center space-x-3">
+                      <div className={`${
+                        item.status === 'critical' ? 'bg-destructive/10' : 'bg-yellow-500/10'
+                      } p-2 rounded-full`}>
+                        <ShoppingCart className={`h-5 w-5 ${
+                          item.status === 'critical' ? 'text-destructive' : 'text-yellow-500'
+                        }`} />
+                      </div>
+                      <div>
+                        <p className="font-medium">{item.name}</p>
+                        <p className="text-sm text-muted-foreground">Estoque: {item.quantity} unidades</p>
+                      </div>
+                    </div>
+                    <Button size="sm" variant="outline">Repor</Button>
+                  </div>
+                  {inventoryItems.indexOf(item) < inventoryItems.length - 1 && <Separator />}
+                </React.Fragment>
+              ))
+            )}
             <div className="pt-2">
-              <Button variant="outline" className="w-full">Ver Estoque Completo</Button>
+              <Button variant="outline" className="w-full" asChild>
+                <Link to="/inventory">Ver Estoque Completo</Link>
+              </Button>
             </div>
           </CardContent>
         </Card>
