@@ -46,9 +46,12 @@ export type Database = {
           email: string
           entry_date: string
           id: string
+          is_new: boolean | null
           name: string
           notes: string | null
           phone: string | null
+          registration_month: number | null
+          registration_year: number | null
           updated_at: string
           user_id: string | null
         }
@@ -58,9 +61,12 @@ export type Database = {
           email: string
           entry_date?: string
           id?: string
+          is_new?: boolean | null
           name: string
           notes?: string | null
           phone?: string | null
+          registration_month?: number | null
+          registration_year?: number | null
           updated_at?: string
           user_id?: string | null
         }
@@ -70,11 +76,47 @@ export type Database = {
           email?: string
           entry_date?: string
           id?: string
+          is_new?: boolean | null
           name?: string
           notes?: string | null
           phone?: string | null
+          registration_month?: number | null
+          registration_year?: number | null
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      financial_transactions: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          transaction_date: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          transaction_date: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          transaction_date?: string
+          type?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -155,6 +197,42 @@ export type Database = {
           quantity?: number
           status?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      monthly_stats: {
+        Row: {
+          created_at: string
+          expenses: number
+          id: string
+          month: number
+          new_patients: number
+          occupancy_rate: number
+          revenue: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          expenses?: number
+          id?: string
+          month: number
+          new_patients?: number
+          occupancy_rate?: number
+          revenue?: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          expenses?: number
+          id?: string
+          month?: number
+          new_patients?: number
+          occupancy_rate?: number
+          revenue?: number
+          updated_at?: string
+          year?: number
         }
         Relationships: []
       }

@@ -1,3 +1,4 @@
+
 export interface Appointment {
   id: string;
   client_id: string;
@@ -29,6 +30,9 @@ export interface Client {
   phone: string | null;
   address: string | null;
   entry_date: string;
+  is_new?: boolean;
+  registration_month?: number;
+  registration_year?: number;
 }
 
 export interface Procedure {
@@ -40,4 +44,27 @@ export interface Procedure {
   client_id: string;
   materials?: any;
   professional?: string | null;
+}
+
+export interface FinancialTransaction {
+  id: string;
+  type: 'income' | 'expense';
+  amount: number;
+  description?: string;
+  transaction_date: string;
+  category?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface MonthlyStat {
+  id: string;
+  month: number;
+  year: number;
+  revenue: number;
+  expenses: number;
+  new_patients: number;
+  occupancy_rate: number;
+  created_at?: string;
+  updated_at?: string;
 }

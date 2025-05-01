@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, DollarSign, ShoppingCart, User, Clock } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
@@ -7,14 +7,19 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { getUpcomingAppointments } from '@/services/appointmentService';
 import { getCriticalInventory } from '@/services/inventoryService';
+import { getCurrentMonthStats, getNewPatients } from '@/services/statsService';
 import { Appointment, InventoryItem } from '@/types/supabase';
 import { format, isToday, isTomorrow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/components/ui/use-toast';
+import RestockModal from '@/components/inventory/RestockModal';
 
 const Dashboard = () => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [restockModalOpen, setRestockModalOpen] = useState(false);
   
   // Fetch upcoming appointments with React Query
   const { 
@@ -55,7 +60,27 @@ const Dashboard = () => {
       }
     }
   });
-  
+
+  // Fetch monthly stats with React Query
+  const {
+    data: monthlyStats,
+    isLoading: statsLoading
+  } = useQuery({
+    queryKey: ['monthlyStats'],
+    queryFn: getCurrentMonthStats,
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
+
+  // Fetch new patients count with React Query
+  const {
+    data: newPatients,
+    isLoading: newPatientsLoading
+  } = useQuery({
+    queryKey: ['newPatients'],
+    queryFn: getNewPatients,
+    staleTime: 1000 * 60 * 60, // 1 hour
+  });
+
   // Format the date display for appointments
   const formatAppointmentDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -77,6 +102,17 @@ const Dashboard = () => {
 
   // Count today's appointments
   const todayAppointments = appointments.filter(apt => isToday(new Date(apt.date))).length;
+
+  // Handle restock button click
+  const handleRestockClick = (item: InventoryItem) => {
+    setSelectedItem(item);
+    setRestockModalOpen(true);
+  };
+
+  // Handle successful restock
+  const handleRestockSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['criticalInventory'] });
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -105,7 +141,9 @@ const Dashboard = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$ 18.560</div>
+            <div className="text-2xl font-bold">
+              {statsLoading ? "..." : `R$ ${monthlyStats?.revenue.toLocaleString('pt-BR') || '0'}`}
+            </div>
             <p className="text-xs text-muted-foreground">+15% comparado ao mês anterior</p>
           </CardContent>
         </Card>
@@ -116,7 +154,9 @@ const Dashboard = () => {
             <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">
+              {newPatientsLoading ? "..." : newPatients || 0}
+            </div>
             <p className="text-xs text-muted-foreground">+3 comparado ao mês anterior</p>
           </CardContent>
         </Card>
@@ -203,7 +243,13 @@ const Dashboard = () => {
                         <p className="text-sm text-muted-foreground">Estoque: {item.quantity} unidades</p>
                       </div>
                     </div>
-                    <Button size="sm" variant="outline">Repor</Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={() => handleRestockClick(item)}
+                    >
+                      Repor
+                    </Button>
                   </div>
                   {inventoryItems.indexOf(item) < inventoryItems.length - 1 && <Separator />}
                 </React.Fragment>
@@ -217,6 +263,14 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal de reposição de estoque */}
+      <RestockModal 
+        open={restockModalOpen}
+        onOpenChange={setRestockModalOpen}
+        item={selectedItem}
+        onSuccess={handleRestockSuccess}
+      />
     </div>
   );
 };

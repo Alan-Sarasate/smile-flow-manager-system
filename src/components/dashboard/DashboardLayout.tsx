@@ -13,11 +13,18 @@ const DashboardLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-dental-gray/50">
-      <Navbar onToggleSidebar={toggleSidebar} />
-      <div className="flex flex-1">
-        <div className={`fixed top-16 bottom-0 ${sidebarOpen ? 'block' : 'hidden'} md:block`}>
+      {/* Navbar fixo */}
+      <div className="fixed top-0 left-0 right-0 z-40">
+        <Navbar onToggleSidebar={toggleSidebar} />
+      </div>
+      
+      <div className="flex flex-1 pt-16">
+        {/* Sidebar fixo */}
+        <div className={`fixed top-16 bottom-0 left-0 z-30 ${sidebarOpen ? 'block' : 'hidden'} md:block transition-all duration-200`}>
           <Sidebar />
         </div>
+        
+        {/* Conteúdo principal com rolagem */}
         <main className={`flex-1 p-6 overflow-auto mt-16 transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : ''}`}>
           <Outlet />
         </main>
