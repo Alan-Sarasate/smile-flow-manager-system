@@ -1,12 +1,12 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, DollarSign, ShoppingCart, User, Clock } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { getUpcomingAppointments } from '@/services/appointmentService';
-import { getMockCriticalInventory } from '@/services/inventoryService';
+import { getCriticalInventory } from '@/services/inventoryService';
 import { Appointment, InventoryItem } from '@/types/supabase';
 import { format, isToday, isTomorrow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -25,22 +25,36 @@ const Dashboard = () => {
     queryKey: ['upcomingAppointments'],
     queryFn: getUpcomingAppointments,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    onError: () => {
-      toast({
-        title: "Erro ao carregar agendamentos",
-        description: "Não foi possível carregar os próximos agendamentos",
-        variant: "destructive"
-      });
+    meta: {
+      onError: () => {
+        toast({
+          title: "Erro ao carregar agendamentos",
+          description: "Não foi possível carregar os próximos agendamentos",
+          variant: "destructive"
+        });
+      }
     }
   });
   
-  // Use mock inventory data for now
-  // In a future update, we'll replace this with real data from Supabase
-  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
-  
-  useEffect(() => {
-    setInventoryItems(getMockCriticalInventory());
-  }, []);
+  // Fetch critical inventory with React Query
+  const { 
+    data: inventoryItems = [], 
+    isLoading: inventoryLoading,
+    error: inventoryError
+  } = useQuery({
+    queryKey: ['criticalInventory'],
+    queryFn: getCriticalInventory,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    meta: {
+      onError: () => {
+        toast({
+          title: "Erro ao carregar inventário",
+          description: "Não foi possível carregar os itens críticos de estoque",
+          variant: "destructive"
+        });
+      }
+    }
+  });
   
   // Format the date display for appointments
   const formatAppointmentDate = (dateString: string) => {
@@ -61,6 +75,9 @@ const Dashboard = () => {
     return format(date, 'HH:mm');
   };
 
+  // Count today's appointments
+  const todayAppointments = appointments.filter(apt => isToday(new Date(apt.date))).length;
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
@@ -76,9 +93,7 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {appointmentsLoading ? 
-                "..." : 
-                appointments.filter(apt => isToday(new Date(apt.date))).length}
+              {appointmentsLoading ? "..." : todayAppointments}
             </div>
             <p className="text-xs text-muted-foreground">+2 comparado a ontem</p>
           </CardContent>
@@ -112,7 +127,7 @@ const Dashboard = () => {
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{inventoryItems.length}</div>
+            <div className="text-2xl font-bold">{inventoryLoading ? "..." : inventoryItems.length}</div>
             <p className="text-xs text-muted-foreground text-red-500">Alerta de reabastecimento</p>
           </CardContent>
         </Card>
@@ -165,7 +180,11 @@ const Dashboard = () => {
             <CardTitle>Estoque Crítico</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {inventoryItems.length === 0 ? (
+            {inventoryLoading ? (
+              <p className="text-center text-muted-foreground py-4">Carregando estoque...</p>
+            ) : inventoryError ? (
+              <p className="text-center text-red-500 py-4">Erro ao carregar estoque</p>
+            ) : inventoryItems.length === 0 ? (
               <p className="text-center text-muted-foreground py-4">Nenhum item em estoque crítico</p>
             ) : (
               inventoryItems.map((item) => (

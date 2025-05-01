@@ -119,6 +119,45 @@ export type Database = {
           },
         ]
       }
+      inventory: {
+        Row: {
+          category: string
+          cost: number
+          created_at: string
+          id: string
+          last_purchased: string | null
+          minimum_quantity: number
+          name: string
+          quantity: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          cost: number
+          created_at?: string
+          id?: string
+          last_purchased?: string | null
+          minimum_quantity?: number
+          name: string
+          quantity?: number
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          cost?: number
+          created_at?: string
+          id?: string
+          last_purchased?: string | null
+          minimum_quantity?: number
+          name?: string
+          quantity?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payments: {
         Row: {
           amount: number

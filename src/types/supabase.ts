@@ -1,4 +1,3 @@
-
 export interface Appointment {
   id: string;
   client_id: string;
@@ -19,6 +18,8 @@ export interface InventoryItem {
   cost: number;
   last_purchased?: string;
   status: 'ok' | 'low' | 'critical';
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface Client {
