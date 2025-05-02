@@ -42,6 +42,7 @@ export interface Client {
   number?: string | null;
   complement?: string | null;
   cpf?: string | null;
+  notes?: string | null;
 }
 
 export interface Procedure {

@@ -114,46 +114,70 @@ export type Database = {
       clients: {
         Row: {
           address: string | null
+          cep: string | null
+          city: string | null
+          complement: string | null
+          cpf: string | null
           created_at: string
           email: string
           entry_date: string
           id: string
           is_new: boolean | null
           name: string
+          neighborhood: string | null
           notes: string | null
+          number: string | null
           phone: string | null
           registration_month: number | null
           registration_year: number | null
+          state: string | null
+          street: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
           address?: string | null
+          cep?: string | null
+          city?: string | null
+          complement?: string | null
+          cpf?: string | null
           created_at?: string
           email: string
           entry_date?: string
           id?: string
           is_new?: boolean | null
           name: string
+          neighborhood?: string | null
           notes?: string | null
+          number?: string | null
           phone?: string | null
           registration_month?: number | null
           registration_year?: number | null
+          state?: string | null
+          street?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
           address?: string | null
+          cep?: string | null
+          city?: string | null
+          complement?: string | null
+          cpf?: string | null
           created_at?: string
           email?: string
           entry_date?: string
           id?: string
           is_new?: boolean | null
           name?: string
+          neighborhood?: string | null
           notes?: string | null
+          number?: string | null
           phone?: string | null
           registration_month?: number | null
           registration_year?: number | null
+          state?: string | null
+          street?: string | null
           updated_at?: string
           user_id?: string | null
         }

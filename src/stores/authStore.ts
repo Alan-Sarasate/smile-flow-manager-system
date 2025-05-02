@@ -1,117 +1,67 @@
-
 import { create } from 'zustand';
-import { supabase } from '@/integrations/supabase/client';
-import { User } from '@supabase/supabase-js';
 
-type Profile = {
-  id: string;
-  name: string | null;
-  role: string;
-};
-
-type AuthState = {
-  user: User | null;
-  profile: Profile | null;
-  isAdmin: boolean;
-  initialized: boolean;
-  loading: boolean;
-  initialize: () => Promise<void>;
-  login: (email: string, password: string) => Promise<{ error: string | null }>;
-  loginWithGoogle: () => Promise<void>;
-  register: (email: string, password: string, name: string) => Promise<{ error: string | null }>;
-  logout: () => Promise<void>; // Fixed return type
-  setUser: (user: User | null) => void;
-  setProfile: (profile: Profile | null) => void;
-};
+export interface AuthState {
+  user: any | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;  // Add isLoading property
+  login: (email: string, password: string) => Promise<{success: boolean, error?: string}>;
+  logout: () => Promise<void>;
+  setUser: (user: any | null) => void;
+  checkAuth: () => Promise<boolean>;
+}
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
-  profile: null,
-  isAdmin: false,
-  initialized: false,
-  loading: false,
-  
-  initialize: async () => {
-    const { data } = await supabase.auth.getSession();
-    
-    if (data.session?.user) {
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.session.user.id)
-        .single();
-        
-      set({ 
-        user: data.session.user,
-        profile: profileData,
-        isAdmin: profileData?.role === 'admin',
-        initialized: true
-      });
-    } else {
-      set({ user: null, profile: null, initialized: true });
-    }
+  isAuthenticated: false,
+  isLoading: true,  // Initialize isLoading to true
+  login: async (email: string, password: string) => {
+    // Here you would typically make an API call to your authentication endpoint
+    // For example, using fetch:
+    // const response = await fetch('/api/login', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify({ email, password }),
+    // });
+    // const data = await response.json();
+    // if (response.ok) {
+    //   set({ user: data.user, isAuthenticated: true });
+    //   return { success: true };
+    // } else {
+    //   return { success: false, error: data.message };
+    // }
+
+    // Placeholder return for demonstration purposes
+    return { success: false, error: 'Not implemented' };
   },
-  
-  login: async (email, password) => {
-    set({ loading: true });
-    
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    if (data.user) {
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
-        
-      set({
-        user: data.user,
-        profile: profileData,
-        isAdmin: profileData?.role === 'admin',
-        loading: false
-      });
-    } else {
-      set({ loading: false });
-    }
-    
-    return { error: error ? error.message : null };
-  },
-  
-  loginWithGoogle: async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/dashboard`,
-      },
-    });
-  },
-  
-  register: async (email, password, name) => {
-    set({ loading: true });
-    
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name: name,
-        },
-      },
-    });
-    
-    set({ loading: false });
-    
-    return { error: error ? error.message : null };
-  },
-  
   logout: async () => {
-    await supabase.auth.signOut();
-    set({ user: null, profile: null });
+    // Here you would typically make an API call to your logout endpoint
+    // For example, using fetch:
+    // await fetch('/api/logout');
+    // set({ user: null, isAuthenticated: false });
+
+    // Placeholder for demonstration purposes
+    set({ user: null, isAuthenticated: false, isLoading: false });
   },
-  
-  setUser: (user) => set({ user }),
-  setProfile: (profile) => set({ profile, isAdmin: profile?.role === 'admin' }),
+  setUser: (user: any | null) => set({ user, isAuthenticated: !!user, isLoading: false }),
+  checkAuth: async () => {
+    // Here you would typically check if the user is authenticated
+    // For example, by checking for a token in local storage and verifying it with the server:
+    // const token = localStorage.getItem('token');
+    // if (token) {
+    //   const response = await fetch('/api/verify-token', {
+    //     headers: {
+    //       Authorization: `Bearer ${token}`,
+    //     },
+    //   });
+    //   if (response.ok) {
+    //     const data = await response.json();
+    //     set({ user: data.user, isAuthenticated: true });
+    //     return true;
+    //   }
+    // }
+    set({ isLoading: false });
+    return false;
+  }
 }));
