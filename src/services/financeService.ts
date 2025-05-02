@@ -2,59 +2,79 @@
 import { supabase } from '@/integrations/supabase/client';
 import { FinancialTransaction } from '@/types/supabase';
 
-// Função para buscar transações financeiras
-export const getTransactions = async (): Promise<FinancialTransaction[]> => {
+export const getFinancialTransactions = async (limit: number = 30): Promise<FinancialTransaction[]> => {
   const { data, error } = await supabase
     .from('financial_transactions')
     .select('*')
-    .order('transaction_date', { ascending: false });
+    .order('transaction_date', { ascending: false })
+    .limit(limit);
     
   if (error) {
-    console.error('Error fetching transactions:', error);
+    console.error('Error fetching financial transactions:', error);
     return [];
   }
   
-  return data;
+  // Converter o tipo string para o tipo union 'income' | 'expense'
+  return data?.map(item => ({
+    ...item,
+    type: item.type === 'income' ? 'income' : 'expense'
+  } as FinancialTransaction)) || [];
 };
 
-// Função para calcular o total de receitas do mês atual
-export const getMonthlyRevenue = async (): Promise<number> => {
-  const currentDate = new Date();
-  const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().split('T')[0];
-  const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString().split('T')[0];
+export const getMonthlyBalance = async (year: number, month: number): Promise<{ income: number; expense: number }> => {
+  // Converter mês para 1-12
+  const firstDayOfMonth = new Date(year, month - 1, 1);
+  const lastDayOfMonth = new Date(year, month, 0);
   
+  const firstDayStr = firstDayOfMonth.toISOString().split('T')[0];
+  const lastDayStr = lastDayOfMonth.toISOString().split('T')[0];
+  
+  // Buscar todas as transações do mês
   const { data, error } = await supabase
     .from('financial_transactions')
-    .select('amount')
-    .eq('type', 'income')
-    .gte('transaction_date', firstDay)
-    .lte('transaction_date', lastDay);
+    .select('*')
+    .gte('transaction_date', firstDayStr)
+    .lte('transaction_date', lastDayStr);
     
   if (error) {
-    console.error('Error fetching monthly revenue:', error);
-    return 0;
+    console.error('Error fetching monthly balance:', error);
+    return { income: 0, expense: 0 };
   }
   
-  return data.reduce((sum, transaction) => sum + transaction.amount, 0);
+  // Calcular totais
+  const income = data
+    ?.filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+    
+  const expense = data
+    ?.filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+    
+  return { income, expense };
 };
 
-// Função para calcular o total de despesas do mês atual
-export const getMonthlyExpenses = async (): Promise<number> => {
-  const currentDate = new Date();
-  const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString().split('T')[0];
-  const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString().split('T')[0];
-  
-  const { data, error } = await supabase
-    .from('financial_transactions')
-    .select('amount')
-    .eq('type', 'expense')
-    .gte('transaction_date', firstDay)
-    .lte('transaction_date', lastDay);
+export const addTransaction = async (transaction: Omit<FinancialTransaction, 'id' | 'created_at' | 'updated_at'>): Promise<{ success: boolean; transaction?: FinancialTransaction; error?: string }> => {
+  try {
+    const { data, error } = await supabase
+      .from('financial_transactions')
+      .insert(transaction)
+      .select()
+      .single();
+      
+    if (error) {
+      console.error('Error adding transaction:', error);
+      return { success: false, error: error.message };
+    }
     
-  if (error) {
-    console.error('Error fetching monthly expenses:', error);
-    return 0;
+    return { 
+      success: true,
+      transaction: {
+        ...data,
+        type: data.type === 'income' ? 'income' : 'expense'
+      } as FinancialTransaction
+    };
+  } catch (error) {
+    console.error('Error adding transaction:', error);
+    return { success: false, error: 'Erro ao adicionar transação' };
   }
-  
-  return data.reduce((sum, transaction) => sum + transaction.amount, 0);
 };

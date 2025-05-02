@@ -39,6 +39,78 @@ export type Database = {
         }
         Relationships: []
       }
+      availability_exceptions: {
+        Row: {
+          created_at: string
+          date: string
+          description: string | null
+          end_time: string | null
+          exception_type: string
+          id: string
+          is_all_day: boolean | null
+          start_time: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          description?: string | null
+          end_time?: string | null
+          exception_type: string
+          id?: string
+          is_all_day?: boolean | null
+          start_time?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          end_time?: string | null
+          exception_type?: string
+          id?: string
+          is_all_day?: boolean | null
+          start_time?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      availability_settings: {
+        Row: {
+          created_at: string
+          day_of_week: number
+          end_time: string
+          id: string
+          interval_minutes: number
+          is_available: boolean
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          day_of_week: number
+          end_time: string
+          id?: string
+          interval_minutes?: number
+          is_available?: boolean
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          interval_minutes?: number
+          is_available?: boolean
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string | null
@@ -295,6 +367,7 @@ export type Database = {
           client_id: string
           created_at: string
           date: string
+          duration: number | null
           id: string
           materials: Json | null
           name: string
@@ -302,12 +375,14 @@ export type Database = {
           price: number
           professional: string | null
           status: string
+          type: string | null
           updated_at: string
         }
         Insert: {
           client_id: string
           created_at?: string
           date: string
+          duration?: number | null
           id?: string
           materials?: Json | null
           name: string
@@ -315,12 +390,14 @@ export type Database = {
           price: number
           professional?: string | null
           status: string
+          type?: string | null
           updated_at?: string
         }
         Update: {
           client_id?: string
           created_at?: string
           date?: string
+          duration?: number | null
           id?: string
           materials?: Json | null
           name?: string
@@ -328,6 +405,7 @@ export type Database = {
           price?: number
           professional?: string | null
           status?: string
+          type?: string | null
           updated_at?: string
         }
         Relationships: [

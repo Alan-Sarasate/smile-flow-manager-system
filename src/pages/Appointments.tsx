@@ -6,12 +6,27 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import AppointmentCalendar from '@/components/appointments/AppointmentCalendar';
 import AppointmentForm from '@/components/appointments/AppointmentForm';
+import AvailabilityManager from '@/components/appointments/AvailabilityManager';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Calendar as CalendarIcon, Plus } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { getDailyAppointments } from '@/services/appointmentService';
 
 const Appointments = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   
+  const handleRefresh = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+  
+  // Carregar agendamentos para a data selecionada
+  const { data: appointments, isLoading } = useQuery({
+    queryKey: ['appointments', date?.toISOString(), refreshTrigger],
+    queryFn: () => date ? getDailyAppointments(date) : Promise.resolve([]),
+    enabled: !!date
+  });
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
@@ -26,7 +41,7 @@ const Appointments = () => {
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px]">
-            <AppointmentForm />
+            <AppointmentForm onSuccess={handleRefresh} />
           </DialogContent>
         </Dialog>
       </div>
@@ -100,26 +115,57 @@ const Appointments = () => {
             </CardHeader>
             <CardContent>
               <div className="rounded-md border">
-                <div className="grid grid-cols-5 bg-muted/50 p-3 font-medium">
+                <div className="grid grid-cols-6 bg-muted/50 p-3 font-medium">
                   <div>Paciente</div>
                   <div>Procedimento</div>
                   <div>Data</div>
                   <div>Horário</div>
+                  <div>Status</div>
                   <div className="text-right">Ações</div>
                 </div>
                 <div className="divide-y">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="grid grid-cols-5 p-3 items-center">
-                      <div>João Silva</div>
-                      <div>Clareamento</div>
-                      <div>{new Date().toLocaleDateString('pt-BR')}</div>
-                      <div>14:30</div>
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="sm">Editar</Button>
-                        <Button variant="destructive" size="sm">Cancelar</Button>
+                  {isLoading ? (
+                    <div className="p-3 text-center">Carregando...</div>
+                  ) : appointments && appointments.length > 0 ? (
+                    appointments.map((appointment) => (
+                      <div key={appointment.id} className="grid grid-cols-6 p-3 items-center">
+                        <div>{appointment.client_name}</div>
+                        <div>{appointment.procedure_name}</div>
+                        <div>{new Date(appointment.date).toLocaleDateString('pt-BR')}</div>
+                        <div>{new Date(appointment.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</div>
+                        <div>
+                          {appointment.status === 'scheduled' && 'Agendado'}
+                          {appointment.status === 'confirmed' && 'Confirmado'}
+                          {appointment.status === 'urgent' && 'Urgência'}
+                          {appointment.status === 'cancelled' && 'Cancelado'}
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" size="sm">Editar</Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[600px]">
+                              <AppointmentForm
+                                appointmentId={appointment.id}
+                                defaultValues={{
+                                  date: new Date(appointment.date),
+                                  time: new Date(appointment.date).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}),
+                                  patientName: appointment.client_name,
+                                  procedure: appointment.procedure_name
+                                }}
+                                onSuccess={handleRefresh}
+                              />
+                            </DialogContent>
+                          </Dialog>
+                          <Button variant="destructive" size="sm">Cancelar</Button>
+                        </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="p-3 text-center text-muted-foreground">
+                      Nenhum agendamento encontrado
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -127,83 +173,7 @@ const Appointments = () => {
         </TabsContent>
         
         <TabsContent value="availability" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Gerenciar Disponibilidade</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="rounded-md border p-4">
-                  <h3 className="font-medium mb-3">Horários Padrão</h3>
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium">Segunda-feira</h4>
-                        <div className="text-sm">08:00 - 12:00</div>
-                        <div className="text-sm">14:00 - 18:00</div>
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium">Terça-feira</h4>
-                        <div className="text-sm">08:00 - 12:00</div>
-                        <div className="text-sm">14:00 - 18:00</div>
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium">Quarta-feira</h4>
-                        <div className="text-sm">08:00 - 12:00</div>
-                        <div className="text-sm">14:00 - 18:00</div>
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium">Quinta-feira</h4>
-                        <div className="text-sm">08:00 - 12:00</div>
-                        <div className="text-sm">14:00 - 18:00</div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-4 gap-4">
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium">Sexta-feira</h4>
-                        <div className="text-sm">08:00 - 12:00</div>
-                        <div className="text-sm">14:00 - 18:00</div>
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium">Sábado</h4>
-                        <div className="text-sm">08:00 - 12:00</div>
-                      </div>
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium">Domingo</h4>
-                        <div className="text-sm text-muted-foreground">Fechado</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <Button variant="outline">Editar Horários Padrão</Button>
-                  </div>
-                </div>
-                
-                <div className="rounded-md border p-4">
-                  <h3 className="font-medium mb-3">Bloqueios e Exceções</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center border-b pb-2">
-                      <div>
-                        <p className="font-medium">Feriado - Corpus Christi</p>
-                        <p className="text-sm text-muted-foreground">30/05/2025 - Dia todo</p>
-                      </div>
-                      <Button variant="ghost" size="sm">Remover</Button>
-                    </div>
-                    <div className="flex justify-between items-center border-b pb-2">
-                      <div>
-                        <p className="font-medium">Consulta Dr. Carlos</p>
-                        <p className="text-sm text-muted-foreground">05/05/2025 - 14:00 às 15:30</p>
-                      </div>
-                      <Button variant="ghost" size="sm">Remover</Button>
-                    </div>
-                  </div>
-                  <div className="mt-4">
-                    <Button>Adicionar Exceção</Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <AvailabilityManager />
         </TabsContent>
       </Tabs>
     </div>

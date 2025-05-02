@@ -8,6 +8,7 @@ export interface Appointment {
   status: string;
   professional: string;
   type?: string;
+  duration?: number;
 }
 
 export interface InventoryItem {
@@ -44,6 +45,8 @@ export interface Procedure {
   client_id: string;
   materials?: any;
   professional?: string | null;
+  type?: string;
+  duration?: number;
 }
 
 export interface FinancialTransaction {
@@ -65,6 +68,30 @@ export interface MonthlyStat {
   expenses: number;
   new_patients: number;
   occupancy_rate: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AvailabilitySetting {
+  id: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+  interval_minutes: number;
+  is_available: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface AvailabilityException {
+  id: string;
+  title: string;
+  date: string;
+  start_time?: string | null;
+  end_time?: string | null;
+  is_all_day?: boolean;
+  exception_type: 'block' | 'holiday' | 'personal' | 'other';
+  description?: string | null;
   created_at?: string;
   updated_at?: string;
 }
