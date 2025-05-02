@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Appointment, AvailabilitySetting, AvailabilityException } from '@/types/supabase';
 import { format, parse, addMinutes } from 'date-fns';
@@ -199,7 +198,7 @@ export const updateAppointment = async (id: string, appointmentData: {
     
     const { data, error } = await supabase
       .from('procedures')
-      .update(updateData)
+      .update(updateData as any)
       .eq('id', id)
       .select()
       .single();
@@ -331,7 +330,7 @@ export const getAvailabilityExceptions = async (): Promise<AvailabilityException
     return [];
   }
   
-  return data || [];
+  return (data as AvailabilityException[]) || [];
 };
 
 export const createAvailabilityException = async (exception: Omit<AvailabilityException, 'id' | 'created_at' | 'updated_at'>): Promise<{ success: boolean; error?: any }> => {

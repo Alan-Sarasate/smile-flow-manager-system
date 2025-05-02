@@ -101,3 +101,36 @@ export const updateClient = async (id: string, client: Partial<Client>): Promise
     return { success: false, error };
   }
 };
+
+// Função para buscar endereço por CEP usando a API ViaCEP
+export const fetchAddressByCep = async (cep: string): Promise<{
+  street?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  error?: string;
+}> => {
+  if (!cep || cep.replace(/\D/g, '').length !== 8) {
+    return { error: 'CEP inválido' };
+  }
+  
+  try {
+    const cleanCep = cep.replace(/\D/g, '');
+    const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+    const data = await response.json();
+    
+    if (data.erro) {
+      return { error: 'CEP não encontrado' };
+    }
+    
+    return {
+      street: data.logradouro,
+      neighborhood: data.bairro,
+      city: data.localidade,
+      state: data.uf
+    };
+  } catch (error) {
+    console.error('Error fetching address by CEP:', error);
+    return { error: 'Erro ao buscar CEP' };
+  }
+};

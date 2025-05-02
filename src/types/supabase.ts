@@ -34,6 +34,14 @@ export interface Client {
   is_new?: boolean;
   registration_month?: number;
   registration_year?: number;
+  cep?: string | null;
+  street?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+  number?: string | null;
+  complement?: string | null;
+  cpf?: string | null;
 }
 
 export interface Procedure {

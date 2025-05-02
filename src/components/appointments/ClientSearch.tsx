@@ -3,12 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { Check, ChevronsUpDown, UserPlus } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { searchClients } from "@/services/clientService";
+import { searchClients, getClientById } from "@/services/clientService";
 import { Client } from "@/types/supabase";
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { CreateClientForm } from './CreateClientForm';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ClientSearchProps {
   value?: string;
@@ -58,14 +59,9 @@ export function ClientSearch({ value, onChange }: ClientSearchProps) {
       
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from('clients')
-          .select('*')
-          .eq('id', value)
-          .single();
-          
-        if (data && !error) {
-          setSelectedClient(data);
+        const client = await getClientById(value);
+        if (client) {
+          setSelectedClient(client);
         }
       } catch (error) {
         console.error("Error fetching client:", error);
@@ -75,7 +71,7 @@ export function ClientSearch({ value, onChange }: ClientSearchProps) {
     };
     
     fetchClient();
-  }, [value]);
+  }, [value, selectedClient?.id]);
   
   const handleClientCreated = (newClient: Client) => {
     setSelectedClient(newClient);
@@ -94,7 +90,12 @@ export function ClientSearch({ value, onChange }: ClientSearchProps) {
             aria-expanded={open}
             className="w-full justify-between"
           >
-            {selectedClient ? selectedClient.name : "Selecione um paciente"}
+            {loading ? (
+              <span className="flex items-center">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Carregando...
+              </span>
+            ) : selectedClient ? selectedClient.name : "Selecione um paciente"}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
@@ -107,7 +108,10 @@ export function ClientSearch({ value, onChange }: ClientSearchProps) {
             />
             <CommandEmpty className="py-6 text-center text-sm">
               {loading ? (
-                "Buscando pacientes..."
+                <div className="flex flex-col items-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin mb-2" />
+                  <p>Buscando pacientes...</p>
+                </div>
               ) : (
                 <div>
                   <p>Nenhum paciente encontrado.</p>
@@ -180,6 +184,3 @@ export function ClientSearch({ value, onChange }: ClientSearchProps) {
     </div>
   );
 }
-
-// Importação necessária para a função interna
-import { supabase } from '@/integrations/supabase/client';
